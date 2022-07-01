@@ -9,7 +9,7 @@ let rgb = new Float32Array([114/255, 144/255, 154/255, 255]);
 export function Render() {
     ImGui.Text("Hello, world!");
     ImGui.SliderFloat("float", f, 0.0, 1.0);
-	ImGui.ColorEdit3("clear color", rgb);
+    ImGui.ColorEdit3("clear color", rgb);
 
     if(ImGui.Button("Demo Window"))
     {
