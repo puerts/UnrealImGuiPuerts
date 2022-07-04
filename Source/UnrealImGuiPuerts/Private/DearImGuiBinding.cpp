@@ -95,6 +95,11 @@ namespace ImGuiWrapped
     {
         ImGui::LogText("%s", info.c_str());
     }
+
+    static bool ListBox(const char* label, int* current_item, void* items, int items_count, int height_in_items)
+    {
+        return ImGui::ListBox(label, current_item, (const char* const *)items, items_count, height_in_items);
+    }
 }
 
 // overload with default values
@@ -595,6 +600,7 @@ struct AutoRegisterForDearImGui
                 SelectOverload(ImGui_Selectable, bool (*)(const char*, bool, ImGuiSelectableFlags, const ImVec2&)), 
                 SelectOverload(ImGui_Selectable, bool (*)(const char*, bool*, ImGuiSelectableFlags, const ImVec2&)) 
                 ))
+            .Function("ListBox", MakeFunction(&ImGuiWrapped::ListBox, -1))
             //.Function("ListBox", MakeFunction(&ImGui::ListBox, -1)) //bool ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items = -1);
             //.Function("ListBox", MakeFunction(&ImGui::ListBox, -1)) //bool ImGui::ListBox(const char* label, int* current_item, bool (*items_getter)(void*, int, const char**), void* data, int items_count, int height_in_items)
             .Function("ListBoxHeader", CombineOverloads(
