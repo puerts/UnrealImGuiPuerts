@@ -97,6 +97,11 @@ namespace ImGuiWrapped
     }
 }
 
+// overload with default values
+DeclOverloads(ImGui_Selectable);
+DeclOverload(ImGui_Selectable, bool (*)(const char*, bool, ImGuiSelectableFlags, const ImVec2&), &ImGui::Selectable, false, 0, ImVec2(0,0));
+DeclOverload(ImGui_Selectable, bool (*)(const char*, bool*, ImGuiSelectableFlags, const ImVec2&), &ImGui::Selectable, 0, ImVec2(0,0));
+
 
 struct AutoRegisterForDearImGui
 {
@@ -587,8 +592,8 @@ struct AutoRegisterForDearImGui
                 ))
             .Function("SetNextItemOpen", MakeFunction(&ImGui::SetNextItemOpen, 0))
             .Function("Selectable", CombineOverloads(
-                MakeOverload(bool (*)(const char*, bool, ImGuiSelectableFlags, const ImVec2&), &ImGui::Selectable), //TODO:default value  .Function("Selectable", MakeFunction(&ImGui::Selectable, false, 0, ImVec2(0,0)))
-                MakeOverload(bool (*)(const char*, bool*, ImGuiSelectableFlags, const ImVec2&), &ImGui::Selectable) //TODO:default value  .Function("Selectable", MakeFunction(&ImGui::Selectable, 0, ImVec2(0,0)))
+                SelectOverload(ImGui_Selectable, bool (*)(const char*, bool, ImGuiSelectableFlags, const ImVec2&)), 
+                SelectOverload(ImGui_Selectable, bool (*)(const char*, bool*, ImGuiSelectableFlags, const ImVec2&)) 
                 ))
             //.Function("ListBox", MakeFunction(&ImGui::ListBox, -1)) //bool ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items = -1);
             //.Function("ListBox", MakeFunction(&ImGui::ListBox, -1)) //bool ImGui::ListBox(const char* label, int* current_item, bool (*items_getter)(void*, int, const char**), void* data, int items_count, int height_in_items)
