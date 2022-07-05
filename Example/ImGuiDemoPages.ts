@@ -4,7 +4,8 @@ import { ConstraintProfileProperties } from 'ue';
 
 // string literal
 let simple_window_titil = toCString("Simple Window"); // faster than passing a string
-let listbox_items = [ "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon"].map(toCString);
+let fruits = [ "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon"];
+let listbox_items = fruits.map(toCString);
 let listbox_items_cptr_array = toCPtrArray.apply(null, listbox_items);
 (listbox_items_cptr_array as any).__ab = listbox_items; //prevent gc
 
@@ -31,7 +32,7 @@ export function Render() {
 
     ImGui.ListBox("listbox\n(single select)", listbox_item_current, listbox_items_cptr_array, 9, 4);
 
-    ImGui.Text(`listbox item${$unref(listbox_item_current)} selected`);
+    ImGui.Text(`${fruits[$unref(listbox_item_current)]} selected`);
 
     ImGui.Text(`Application average ${(1000 / ImGui.GetIO().Framerate).toFixed(3)} ms/frame (${ImGui.GetIO().Framerate.toFixed(1)} FPS)`);
 
