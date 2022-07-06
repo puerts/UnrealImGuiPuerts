@@ -1,5 +1,6 @@
 #include <imgui.h>
 #include "Binding.hpp"
+#include "Object.hpp"
 #include <string>
 
 #define MakeFunctionWithScriptTypePtr(M, ...)                                                   \
@@ -35,6 +36,7 @@ UsingCppType(ImFontConfig);
 UsingCppType(ImFontGlyph);
 UsingCppType(ImDrawListSplitter);
 UsingCppType(ImDrawVert);
+UsingCppType(ImGuiInputTextCallbackData);
 
 namespace ImGuiWrapped
 {
@@ -100,6 +102,59 @@ namespace ImGuiWrapped
     {
         return ImGui::ListBox(label, current_item, (const char* const *)items, items_count, height_in_items);
     }
+
+    struct InputTextCallback_UserData
+    {
+        std::string* Str;
+        std::function<int(ImGuiInputTextCallbackData *data)> Callback;
+    };
+
+    static int InputTextCallback(ImGuiInputTextCallbackData* data)
+    {
+        InputTextCallback_UserData* user_data = (InputTextCallback_UserData*)data->UserData;
+        if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+        {
+            std::string* str = user_data->Str;
+            IM_ASSERT(data->Buf == str->c_str());
+            str->resize(data->BufTextLen);
+            data->Buf = (char*)str->c_str();
+        }
+        else if (user_data->Callback)
+        {
+            return user_data->Callback(data);
+        }
+        return 0;
+    }
+    
+    bool InputText(const char* label, std::string* str, ImGuiInputTextFlags flags = 0, std::function<int(ImGuiInputTextCallbackData *data)> callback = nullptr)
+    {
+        flags |= ImGuiInputTextFlags_CallbackResize;
+
+        InputTextCallback_UserData cb_user_data;
+        cb_user_data.Str = str;
+        cb_user_data.Callback = callback;
+        return ImGui::InputText(label, (char*)str->c_str(), str->capacity() + 1, flags, InputTextCallback, &cb_user_data);
+    }
+
+    bool InputTextMultiline(const char* label, std::string* str, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0, std::function<int(ImGuiInputTextCallbackData *data)> callback = nullptr)
+    {
+        flags |= ImGuiInputTextFlags_CallbackResize;
+
+        InputTextCallback_UserData cb_user_data;
+        cb_user_data.Str = str;
+        cb_user_data.Callback = callback;
+        return ImGui::InputTextMultiline(label, (char*)str->c_str(), str->capacity() + 1, size, flags, InputTextCallback, &cb_user_data);
+    }
+
+    bool InputTextWithHint(const char* label, const char* hint, std::string* str, ImGuiInputTextFlags flags, std::function<int(ImGuiInputTextCallbackData *data)> callback = nullptr)
+    {
+        flags |= ImGuiInputTextFlags_CallbackResize;
+
+        InputTextCallback_UserData cb_user_data;
+        cb_user_data.Str = str;
+        cb_user_data.Callback = callback;
+        return ImGui::InputTextWithHint(label, hint, (char*)str->c_str(), str->capacity() + 1, flags, InputTextCallback, &cb_user_data);
+    }
 }
 
 // overload with default values
@@ -113,22 +168,36 @@ struct AutoRegisterForDearImGui
     AutoRegisterForDearImGui()
     {
         puerts::DefineClass<ImGuiContext>()
-             .Register(nullptr); // 避免这类错误 type_traits(731): [C2139] “ImDrawListSharedData”: 未定义的类不允许作为编译器内部类型特征“__is_destructible”的参数
+            .Register(nullptr); // 避免这类错误 type_traits(731): [C2139] “ImDrawListSharedData”: 未定义的类不允许作为编译器内部类型特征“__is_destructible”的参数
 
         puerts::DefineClass<ImDrawListSharedData>()
-             .Register(nullptr);
+            .Register(nullptr);
 
         puerts::DefineClass<ImFontConfig>()
-             .Register(nullptr);
+            .Register(nullptr);
 
         puerts::DefineClass<ImFontGlyph>()
-             .Register(nullptr);
+            .Register(nullptr);
 
         puerts::DefineClass<ImDrawListSplitter>()
-             .Register(nullptr);
+            .Register(nullptr);
 
         puerts::DefineClass<ImDrawVert>()
-             .Register(nullptr);
+            .Register(nullptr);
+
+        puerts::DefineClass<ImGuiInputTextCallbackData>()
+            .Property("EventFlag", MakeProperty(&ImGuiInputTextCallbackData::EventFlag))
+            .Property("Flags", MakeProperty(&ImGuiInputTextCallbackData::Flags))
+            .Property("EventChar", MakeProperty(&ImGuiInputTextCallbackData::EventChar))
+            .Property("EventKey", MakeProperty(&ImGuiInputTextCallbackData::EventKey))
+            .Property("Buf", MakeProperty(&ImGuiInputTextCallbackData::Buf))
+            .Property("BufTextLen", MakeProperty(&ImGuiInputTextCallbackData::BufTextLen))
+            .Property("BufSize", MakeProperty(&ImGuiInputTextCallbackData::BufSize))
+            .Property("BufDirty", MakeProperty(&ImGuiInputTextCallbackData::BufDirty))
+            .Property("CursorPos", MakeProperty(&ImGuiInputTextCallbackData::CursorPos))
+            .Property("SelectionStart", MakeProperty(&ImGuiInputTextCallbackData::SelectionStart))
+            .Property("SelectionEnd", MakeProperty(&ImGuiInputTextCallbackData::SelectionEnd))
+            .Register();
         
     	puerts::DefineClass<ImFontAtlas>()
             .Property("Locked", MakeProperty(&ImFontAtlas::Locked))
@@ -553,9 +622,9 @@ struct AutoRegisterForDearImGui
             .Function("VSliderFloat", MakeFunction(&ImGui::VSliderFloat, "%.3f", 1.0f))
             .Function("VSliderInt", MakeFunction(&ImGui::VSliderInt, "%d"))
             .Function("VSliderScalar", MakeFunction(&ImGui::VSliderScalar, nullptr, 1.0f))
-            //.Function("InputText", MakeFunction(&ImGui::InputText, 0, nullptr, nullptr))   //callback
-            //.Function("InputTextMultiline", MakeFunction(&ImGui::InputTextMultiline, ImVec2(0,0), 0, nullptr, nullptr))  //callback
-            //.Function("InputTextWithHint", MakeFunction(&ImGui::InputTextWithHint, 0, nullptr, nullptr))  //callback
+            .Function("InputText", MakeFunction(&ImGuiWrapped::InputText, 0, nullptr))
+            .Function("InputTextMultiline", MakeFunction(&ImGuiWrapped::InputTextMultiline, ImVec2(0,0), 0, nullptr))  //callback
+            .Function("InputTextWithHint", MakeFunction(&ImGuiWrapped::InputTextWithHint, 0, nullptr))  //callback
             .Function("InputFloat", CombineOverloads(
                 MakeOverloadWithScriptTypePtr(bool (*)(const char*, float*, float, float, const char*, ImGuiInputTextFlags), &ImGui::InputFloat), //TODO:default value .Function("InputFloat", MakeFunction(&ImGui::InputFloat, 0.0f, 0.0f, "%.3f", 0))
                 MakeOverloadWithScriptTypePtr(bool (*)(const char*, float*, float, float, int, ImGuiInputTextFlags), &ImGui::InputFloat) //TODO:default value  .Function("InputFloat", MakeFunction(&ImGui::InputFloat, 0))
