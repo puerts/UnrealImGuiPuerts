@@ -162,6 +162,9 @@ DeclOverloads(ImGui_Selectable);
 DeclOverload(ImGui_Selectable, bool (*)(const char*, bool, ImGuiSelectableFlags, const ImVec2&), &ImGui::Selectable, false, 0, ImVec2(0,0));
 DeclOverload(ImGui_Selectable, bool (*)(const char*, bool*, ImGuiSelectableFlags, const ImVec2&), &ImGui::Selectable, 0, ImVec2(0,0));
 
+DeclOverloads(ImDrawList_AddText);
+DeclOverload(ImDrawList_AddText, void(ImDrawList::*)(const ImVec2&, ImU32, const char*, const char*), &ImDrawList::AddText, nullptr);
+DeclOverload(ImDrawList_AddText, void(ImDrawList::*)(const ImFont*, float, const ImVec2&, ImU32, const char*, const char*, float, const ImVec4*), &ImDrawList::AddText, nullptr, 0.0f, nullptr);
 
 struct AutoRegisterForDearImGui
 {
@@ -366,6 +369,10 @@ struct AutoRegisterForDearImGui
             //.Property("_TextureIdStack", MakeProperty(&ImDrawList::_TextureIdStack)) //ImVector
             //.Property("_Path", MakeProperty(&ImDrawList::_Path)) //ImVector
             .Property("_Splitter", MakeProperty(&ImDrawList::_Splitter))
+            .Method("AddText", CombineOverloads(
+                SelectOverload(ImDrawList_AddText, void(ImDrawList::*)(const ImVec2&, ImU32, const char*, const char*)),
+                SelectOverload(ImDrawList_AddText, void(ImDrawList::*)(const ImFont*, float, const ImVec2&, ImU32, const char*, const char*, float, const ImVec4*))
+                ))
             .Register();
 
         puerts::DefineClass<ImFont>()
