@@ -55,7 +55,8 @@ export function Render() {
         ImGui.Text("hello world");
 
         ImGui.InputText("input with callback", default_input_text, 1 << 6, (data:ImGuiInputTextCallbackData) => {
-            console.log(`onComplete ${data.BufSize} ${data.SelectionStart} ${data.SelectionEnd}`)
+            console.log(`onComplete ${data.BufSize} ${data.SelectionStart} ${data.SelectionEnd}`);
+            return 0;
         });
         //ImGuiInputTextFlags_AllowTabInput       = 1 << 10
         ImGui.InputTextMultiline("##source",multi_line_text , multi_line_text_input_size, 1 << 10);
